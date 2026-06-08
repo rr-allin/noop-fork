@@ -348,15 +348,13 @@ struct TodayView: View {
         appleDays = await repo.appleDailyRows()
     }
 
-    /// Trailing-window values for a metric, with the sparse-data fallback:
-    /// if the trailing window has <2 points, fall back to ALL history so sparse
-    /// series (weight) still render a value + line instead of an empty state.
+    /// Trailing-window values for a metric. Do not fall back to all history here:
+    /// the section is explicitly labelled as a current 14-day trend, and stale imports
+    /// should not render months-old points as if they were recent.
     private func sparkValues(_ key: String, source: String, window: Int) async -> [Double] {
         let all = await repo.series(key: key, source: source)   // full history, asc
         guard !all.isEmpty else { return [] }
-        let windowed = trailingWindow(all, days: window)
-        let chosen = windowed.count >= 2 ? windowed : all
-        return chosen.map { $0.value }
+        return trailingWindow(all, days: window).map { $0.value }
     }
 
     /// Keep only points within the trailing `days` CALENDAR days ending TODAY (the phone's local date).
